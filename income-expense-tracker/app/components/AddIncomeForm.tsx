@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, updateDoc, doc, increment } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
+import '../styles/AddIncomeForm.css';
 
 interface Category {
     id: string;
@@ -67,35 +68,32 @@ export default function AddIncomeForm({ onClose }: { onClose: () => void }) {
     };
 
     return (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-5 border border-gray-300 shadow-lg z-50">
-            <h2 className="text-xl font-bold mb-4">Add Income</h2>
+        <div className="popup">
+            <h2>Add Income</h2>
             <form onSubmit={(e) => e.preventDefault()}>
-                <label className="block mb-2">
+                <label>
                     Amount (₹):
                     <input
                         type="number"
                         value={amount}
                         onChange={(e) => setAmount(Number(e.target.value))}
                         required
-                        className="block w-full mt-1 p-2 border border-gray-300 rounded"
                     />
                 </label>
-                <label className="block mb-2">
+                <label>
                     Date:
                     <input
                         type="date"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="block w-full mt-1 p-2 border border-gray-300 rounded"
                     />
                 </label>
-                <label className="block mb-2">
+                <label>
                     Category:
                     <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         disabled={newCategory !== ''}
-                        className="block w-full mt-1 p-2 border border-gray-300 rounded"
                     >
                         <option value="SELECT">SELECT</option>
                         {categories.map(category => (
@@ -107,38 +105,33 @@ export default function AddIncomeForm({ onClose }: { onClose: () => void }) {
                     </select>
                 </label>
                 {selectedCategory === 'ADD_NEW' && (
-                    <label className="block mb-2">
+                    <label>
                         New Category:
                         <input
                             type="text"
                             value={newCategory}
                             onChange={(e) => setNewCategory(e.target.value)}
-                            className="block w-full mt-1 p-2 border border-gray-300 rounded"
                         />
                     </label>
                 )}
-                <label className="block mb-2">
+                <label>
                     Means:
                     <input
                         type="text"
                         value={means}
                         onChange={(e) => setMeans(e.target.value)}
                         required
-                        className="block w-full mt-1 p-2 border border-gray-300 rounded"
                     />
                 </label>
-                <label className="block mb-2">
+                <label>
                     Note (optional):
                     <textarea
                         value={note}
                         onChange={(e) => setNote(e.target.value)}
-                        className="block w-full mt-1 p-2 border border-gray-300 rounded"
                     />
                 </label>
-                <div className="flex justify-end space-x-2 mt-4">
-                    <button type="button" onClick={handleAddIncome} className="px-4 py-2 bg-blue-500 text-white rounded">Add Income</button>
-                    <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                </div>
+                <button type="button" onClick={handleAddIncome}>Add Income</button>
+                <button type="button" onClick={onClose}>Cancel</button>
             </form>
         </div>
     );
