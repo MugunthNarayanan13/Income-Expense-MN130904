@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { collection, getDocs, deleteDoc, query, where, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { db } from '../app/firebase/firebase';
 import EditIncomeForm from './EditIncomeForm';
-import '../styles/ViewIncomes.css';
+import '../app/styles/ViewIncomes.css';
 
 interface Income {
     id: string;

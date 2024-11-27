@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { collection, getDocs, addDoc, updateDoc, doc, increment } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
-import '../styles/AddIncomeForm.css';
+import { db } from '../app/firebase/firebase';
+import '../app/styles/AddIncomeForm.css';
 
 interface Category {
     id: string;

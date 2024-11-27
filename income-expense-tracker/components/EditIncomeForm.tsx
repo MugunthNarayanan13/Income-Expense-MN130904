@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase/firebase';
+import { db } from '../app/firebase/firebase';
 
 export default function EditIncomeForm({
     income,
