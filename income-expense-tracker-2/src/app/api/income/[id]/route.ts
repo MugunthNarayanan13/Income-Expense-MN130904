@@ -13,7 +13,7 @@ interface Income {
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = await params;
-    const result = await pool.query('SELECT * FROM incomes WHERE income_id = $1', [id]);
+    const result = await pool.query('SELECT * FROM income WHERE income_id = $1', [id]);
 
     if (result.rows.length === 0) {
       return new Response(JSON.stringify({ error: 'Income not found' }), {
@@ -43,7 +43,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const { amount, date, category_id, payment_method_id, description } = body;
 
     const result = await pool.query(
-      'UPDATE incomes SET amount = $1, date = $2, category_id = $3, payment_method_id = $4, description = $5 WHERE income_id = $6 RETURNING *',
+      'UPDATE income SET amount = $1, date = $2, category_id = $3, payment_method_id = $4, description = $5 WHERE income_id = $6 RETURNING *',
       [amount, date, category_id, payment_method_id, description, id]
     );
 
@@ -71,7 +71,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = await params;
-    const result = await pool.query('DELETE FROM incomes WHERE income_id = $1 RETURNING *', [id]);
+    const result = await pool.query('DELETE FROM income WHERE income_id = $1 RETURNING *', [id]);
 
     if (result.rows.length === 0) {
       return new Response(JSON.stringify({ error: 'Income not found' }), {
