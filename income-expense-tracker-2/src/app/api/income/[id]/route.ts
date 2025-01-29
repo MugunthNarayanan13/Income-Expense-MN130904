@@ -9,6 +9,32 @@ interface Income {
   description?: string;
 }
 
+// Get a single income
+export async function GET(request: Request, { params }: { params: { id: string } }) {
+  try {
+    const { id } = await params;
+    const result = await pool.query('SELECT * FROM incomes WHERE income_id = $1', [id]);
+
+    if (result.rows.length === 0) {
+      return new Response(JSON.stringify({ error: 'Income not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(JSON.stringify(result.rows[0]), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error(error);
+    return new Response(JSON.stringify({ error: 'Failed to fetch income' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+}
+
 // Update an income
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {

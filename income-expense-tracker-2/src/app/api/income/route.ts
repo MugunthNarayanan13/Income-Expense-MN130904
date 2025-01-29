@@ -4,7 +4,7 @@ import { parse } from 'url';
 // Define the expected shape of the income data
 interface Income {
     amount: number;
-    date: string; // Can be ISO string or a specific date format
+    date: string;
     category_id: number;
     payment_method_id: number;
     description?: string;
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
         const month = searchParams.get('month');
         const year = searchParams.get('year');
 
-        let query = 'SELECT * FROM income';
+        let query = 'SELECT income_id, amount, TO_CHAR(date, \'YYYY-MM-DD\') AS date, category_id, payment_method_id, description FROM income';
         const conditions: string[] = [];
         const values: any[] = [];
 
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
         }
 
         query += ' ORDER BY date DESC';
-        
+
         const result = await pool.query(query, values);
 
         return new Response(JSON.stringify(result.rows), {
@@ -163,36 +163,4 @@ Sample JSON for adding a new income:
     "payment_method_id": 2,
     "description": "Salary for October"
 }
-
-To handle bulk addition of incomes, you can create a new endpoint that accepts an array of income objects. For example:
-
-export async function POST_BULK(request: Request) {
-    try {
-        const incomes: Income[] = await request.json();
-
-        const values = incomes.map(({ amount, date, category_id, payment_method_id, description }) => 
-            `(${amount}, '${date}', ${category_id}, ${payment_method_id}, '${description}')`
-        ).join(',');
-
-        const query = `
-            INSERT INTO income (amount, date, category_id, payment_method_id, description)
-            VALUES ${values}
-            RETURNING *;
-        `;
-
-        const result = await pool.query(query);
-        return new Response(JSON.stringify(result.rows), {
-            status: 201,
-            headers: { 'Content-Type': 'application/json' },
-        });
-    } catch (error) {
-        console.error(error);
-        return new Response(JSON.stringify({ error: 'Failed to add incomes' }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' },
-        });
-    }
-}
-
-To upload incomes from an Excel file, you can convert the Excel data to JSON format on the client side using libraries like `xlsx` and then send the JSON data to the bulk addition endpoint.
 */
