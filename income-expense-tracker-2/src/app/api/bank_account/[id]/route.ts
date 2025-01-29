@@ -7,9 +7,9 @@ interface BankAccount {
 }
 
 // Get a single bank account
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(_: Request, context: { params: { id: string } }) {
     try {
-        const { id } = params;
+        const { id } = await context.params;
         const result = await pool.query('SELECT * FROM bank_account WHERE bank_account_id = $1', [id]);
 
         if (result.rows.length === 0) {
@@ -33,9 +33,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
 }
 
 // Update a bank account
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, context: { params: { id: string } }) {
     try {
-        const { id } = params;
+        const { id } = await context.params;
         const body: BankAccount = await request.json();
         const { account_name, balance } = body;
 
@@ -65,9 +65,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 }
 
 // Delete a bank account
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, context: { params: { id: string } }) {
     try {
-        const { id } = params;
+        const { id } = await context.params;
         const result = await pool.query('DELETE FROM bank_account WHERE bank_account_id = $1 RETURNING *', [id]);
 
         if (result.rows.length === 0) {
