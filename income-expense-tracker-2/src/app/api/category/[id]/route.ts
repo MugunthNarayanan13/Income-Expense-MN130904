@@ -10,7 +10,7 @@ interface Category {
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = await params;
-    const result = await pool.query('SELECT * FROM categories WHERE category_id = $1', [id]);
+    const result = await pool.query('SELECT * FROM category WHERE category_id = $1', [id]);
 
     if (result.rows.length === 0) {
       return new Response(JSON.stringify({ error: 'Category not found' }), {
@@ -40,7 +40,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const { category_name: category_name, associated_with } = body;
 
     const result = await pool.query(
-      'UPDATE categories SET category_name = $1, associated_with = $2 WHERE category_id = $3 RETURNING *',
+      'UPDATE category SET category_name = $1, associated_with = $2 WHERE category_id = $3 RETURNING *',
       [category_name, associated_with, id]
     );
 
@@ -68,7 +68,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = await params;
-    const result = await pool.query('DELETE FROM categories WHERE category_id = $1 RETURNING *', [id]);
+    const result = await pool.query('DELETE FROM category WHERE category_id = $1 RETURNING *', [id]);
 
     if (result.rows.length === 0) {
       return new Response(JSON.stringify({ error: 'Category not found' }), {

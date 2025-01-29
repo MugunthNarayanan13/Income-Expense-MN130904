@@ -9,7 +9,7 @@ interface Category {
 // Get all categories
 export async function GET() {
   try {
-    const result = await pool.query('SELECT * FROM categories ORDER BY category_id');
+    const result = await pool.query('SELECT * FROM category ORDER BY category_id');
     return new Response(JSON.stringify(result.rows), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
@@ -27,10 +27,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body: Category = await request.json();
-    const { category_name: category_name, associated_with: associated_with } = body;
+    const { category_name, associated_with } = body;
 
     const result = await pool.query(
-      'INSERT INTO categories (category_name, associated_with) VALUES ($1, $2) RETURNING *',
+      'INSERT INTO category (category_name, associated_with) VALUES ($1, $2) RETURNING *',
       [category_name, associated_with]
     );
     return new Response(JSON.stringify(result.rows[0]), {
