@@ -6,10 +6,23 @@ interface Category {
   associated_with: 'income' | 'expense';
 }
 
-// Get all categories
-export async function GET() {
+// Get all categories with optional filtering by associated_with
+export async function GET(request: Request) {
   try {
-    const result = await pool.query('SELECT * FROM category ORDER BY category_id');
+    const url = new URL(request.url);
+    const associatedWith = url.searchParams.get('associated_with');
+
+    let query = 'SELECT * FROM category';
+    const queryParams: string[] = [];
+
+    if (associatedWith) {
+      query += ' WHERE associated_with = $1';
+      queryParams.push(associatedWith);
+    }
+
+    query += ' ORDER BY category_id';
+
+    const result = await pool.query(query, queryParams);
     return new Response(JSON.stringify(result.rows), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
