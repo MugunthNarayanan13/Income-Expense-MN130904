@@ -1,14 +1,13 @@
-import Main from '@/components/main'
-import React from 'react'
+import Main from "@/components/main";
+import AddIncome from "@/components/AddIncome";
 
 export default function HomePage() {
-  const header = <div>Header</div>
-  const footer = <div>Footer</div>
   return (
     <Main>
-      {header}
-      <div>HomePage</div>
-      {footer}
+      <header className="flex justify-between items-center border-b pb-4 mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+      </header>
+      <AddIncome />
     </Main>
-  )
+  );
 }
