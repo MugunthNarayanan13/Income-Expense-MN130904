@@ -1,4 +1,4 @@
-import pool from "@/lib/postgres";
+import pool from '@/lib/postgres';
 
 // Define the expected shape of the budget data
 interface Budget {
@@ -6,7 +6,9 @@ interface Budget {
     allocated_amount: number;
     start_date: string;
     end_date: string;
-    description?: string; // Make description optional
+    description?: string;
+    recurring?: boolean;
+    expense_id?: number;
 }
 
 // Get all budgets with optional filtration
@@ -16,29 +18,28 @@ export async function GET(request: Request) {
         const categoryId = url.searchParams.get('category_id');
         const startDate = url.searchParams.get('start_date');
         const endDate = url.searchParams.get('end_date');
+        const recurring = url.searchParams.get('recurring');
+        let query = 'SELECT budget_id, category_id, allocated_amount, TO_CHAR(start_date, \'YYYY-MM-DD\') AS start_date, TO_CHAR(end_date, \'YYYY-MM-DD\') AS end_date, description, recurring, expense_id FROM budget';
+        const queryParams = [] as any[];
 
-        let query = 'SELECT budget_id, category_id, allocated_amount, TO_CHAR(start_date, \'YYYY-MM-DD\') AS start_date, TO_CHAR(end_date, \'YYYY-MM-DD\') AS end_date, description FROM budget';
-        const queryParams: any[] = [];
-
-        if (categoryId || startDate || endDate) {
-            query += ' WHERE';
-            if (categoryId) {
-                queryParams.push(categoryId);
-                query += ` category_id = $${queryParams.length}`;
-            }
-            if (startDate) {
-                if (queryParams.length > 0) query += ' AND';
-                queryParams.push(startDate);
-                query += ` start_date = $${queryParams.length}`;
-            }
-            if (endDate) {
-                if (queryParams.length > 0) query += ' AND';
-                queryParams.push(endDate);
-                query += ` end_date = $${queryParams.length}`;
-            }
+        if (categoryId) {
+            query += ` WHERE category_id = $${queryParams.length + 1}`;
+            queryParams.push(categoryId);
+        }
+        if (startDate) {
+            query += `${queryParams.length ? ' AND' : ' WHERE'} start_date >= $${queryParams.length + 1}`;
+            queryParams.push(startDate);
+        }
+        if (endDate) {
+            query += `${queryParams.length ? ' AND' : ' WHERE'} end_date <= $${queryParams.length + 1}`;
+            queryParams.push(endDate);
+        }
+        if (recurring) {
+            query += `${queryParams.length ? ' AND' : ' WHERE'} recurring = $${queryParams.length + 1}`;
+            queryParams.push(recurring);
         }
 
-        query += ' ORDER BY category_id, start_date, end_date';
+        query += ' ORDER BY start_date ASC, end_date ASC, category_id ASC';
 
         const result = await pool.query(query, queryParams);
         return new Response(JSON.stringify(result.rows), {
@@ -58,7 +59,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body: Budget = await request.json();
-        const { category_id, allocated_amount, start_date, end_date, description } = body;
+        const { category_id, allocated_amount, start_date, end_date, description, recurring, expense_id } = body;
 
         if (!category_id || !allocated_amount || !start_date || !end_date) {
             return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -84,16 +85,15 @@ export async function POST(request: Request) {
         }
 
         const result = await pool.query(
-            'INSERT INTO budget (category_id, allocated_amount, start_date, end_date, description) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [category_id, allocated_amount, start_date, end_date, description || null]
+            'INSERT INTO budget (category_id, allocated_amount, start_date, end_date, description, recurring, expense_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+            [category_id, allocated_amount, start_date, end_date, description || null, recurring || false, expense_id || null]
         );
 
         return new Response(JSON.stringify(result.rows[0]), {
             status: 201,
             headers: { 'Content-Type': 'application/json' },
         });
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error);
         return new Response(JSON.stringify({ error: 'Failed to add budget' }), {
             status: 500,

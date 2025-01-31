@@ -1,4 +1,4 @@
-import pool from "@/lib/postgres";
+import pool from '@/lib/postgres';
 
 // Define the expected shape of the budget data
 interface Budget {
@@ -6,7 +6,9 @@ interface Budget {
     allocated_amount: number;
     start_date: string;
     end_date: string;
-    description?: string; // Make description optional
+    description?: string;
+    recurring?: boolean;
+    expense_id?: number;
 }
 
 // Get a single budget
@@ -14,7 +16,11 @@ export async function GET(request: Request, { params }: { params: { id: string }
     try {
         const { id } = await params;
         const result = await pool.query(
-            'SELECT budget_id, category_id, allocated_amount, TO_CHAR(start_date, \'YYYY-MM-DD\') AS start_date, TO_CHAR(end_date, \'YYYY-MM-DD\') AS end_date, description FROM budget WHERE budget_id = $1',
+            `SELECT budget_id, category_id, allocated_amount, 
+                    TO_CHAR(start_date, 'YYYY-MM-DD') AS start_date, 
+                    TO_CHAR(end_date, 'YYYY-MM-DD') AS end_date, 
+                    description, recurring, expense_id 
+             FROM budget WHERE budget_id = $1`,
             [id]
         );
 
@@ -43,7 +49,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     try {
         const { id } = await params;
         const body: Budget = await request.json();
-        const { category_id, allocated_amount, start_date, end_date, description } = body;
+        const { category_id, allocated_amount, start_date, end_date, description, recurring, expense_id } = body;
 
         if (!category_id || !allocated_amount || !start_date || !end_date) {
             return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -70,16 +76,25 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         }
 
         const result = await pool.query(
-            'UPDATE budget SET category_id = $1, allocated_amount = $2, start_date = $3, end_date = $4, description = $5 WHERE budget_id = $6 RETURNING *',
-            [category_id, allocated_amount, start_date, end_date, description, id]
+            `UPDATE budget 
+             SET category_id = $1, allocated_amount = $2, start_date = $3, end_date = $4, 
+                 description = $5, recurring = $6, expense_id = $7 
+             WHERE budget_id = $8 RETURNING *`,
+            [category_id, allocated_amount, start_date, end_date, description || null, recurring || false, expense_id || null, id]
         );
+
+        if (result.rowCount === 0) {
+            return new Response(JSON.stringify({ error: 'Budget not found' }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
 
         return new Response(JSON.stringify(result.rows[0]), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
         });
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error);
         return new Response(JSON.stringify({ error: 'Failed to update budget' }), {
             status: 500,
@@ -92,10 +107,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
     try {
         const { id } = await params;
-        const result = await pool.query(
-            'DELETE FROM budget WHERE budget_id = $1 RETURNING *',
-            [id]
-        );
+        const result = await pool.query('DELETE FROM budget WHERE budget_id = $1 RETURNING *', [id]);
 
         if (result.rows.length === 0) {
             return new Response(JSON.stringify({ error: 'Budget not found' }), {
@@ -104,7 +116,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
             });
         }
 
-        return new Response(JSON.stringify(result.rows[0]), {
+        return new Response(JSON.stringify({ message: 'Budget deleted successfully', deleted_budget: result.rows[0] }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' },
         });
