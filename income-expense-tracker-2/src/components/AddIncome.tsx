@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import AddCategoryDialog from "./AddCategoryDialog";
 
 import { Button } from "./ui/button";
 import {
@@ -47,6 +48,7 @@ export default function AddIncome() {
   const [incomeDialogOpen, setIncomeDialogOpen] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
   type Category = {
     category_id: number;
     category_name: string;
@@ -63,7 +65,7 @@ export default function AddIncome() {
     fetch("/api/category?associated_with=income")
       .then((res) => res.json())
       .then((data) => setCategories(data || []));
-    
+
     fetch("/api/payment_method")
       .then((res) => res.json())
       .then((data) => setPaymentMethods(data || []));
@@ -152,6 +154,9 @@ export default function AddIncome() {
               <FormField control={form.control} name="category_id" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
+                  <Button onClick={() => setIsAddCategoryOpen(true)} variant="outline">
+                    Add New Category
+                  </Button>
                   <FormControl>
                     <Select
                       onValueChange={field.onChange}
@@ -226,6 +231,14 @@ export default function AddIncome() {
           </Form>
         </DialogContent>
       </Dialog>
+      <AddCategoryDialog
+        open={isAddCategoryOpen}
+        onOpenChange={setIsAddCategoryOpen}
+        onCategoryAdded={(newCat) => {
+          setCategories([...categories, newCat]);
+          form.setValue("category_id", String(newCat.category_id));
+        }}
+      />
     </>
   );
 };
