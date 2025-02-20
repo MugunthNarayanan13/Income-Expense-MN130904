@@ -6,9 +6,9 @@ interface MainProps {
 
 const Main: React.FC<MainProps> = ({ children }) => {
   return (
-    <div>
+    <main className="flex-1 p-4 flex justify-center items-center">
       {children}
-    </div>
+    </main>
   );
 };
 
