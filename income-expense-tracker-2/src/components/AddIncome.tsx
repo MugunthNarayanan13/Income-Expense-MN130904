@@ -1,11 +1,14 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import AddCategoryDialog from "./AddCategoryDialog";
 
 import { Button } from "./ui/button";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
+import { Input } from "./ui/input";
 import {
   Form,
   FormControl,
@@ -15,7 +18,6 @@ import {
   FormLabel,
   FormMessage,
 } from "./ui/form";
-
 import {
   Select,
   SelectTrigger,
@@ -23,6 +25,8 @@ import {
   SelectContent,
   SelectItem
 } from "./ui/select";
+
+import AddCategoryDialog from "./AddCategoryDialog";
 
 // income_id integer PK
 // amount numeric NOT NULL
@@ -32,15 +36,12 @@ import {
 // description text NULL DEFAULT NULL
 
 const addIncomeSchema = z.object({
-  amount: z.string().min(1, { message: "Amount must be greater than 0" }),
+  amount: z.coerce.number().gt(0, { message: "Amount must be greater than 0" }), // Coerce to number, form data is always string so we need to convert it to number
   date: z.string(),
   category_id: z.string().nonempty({ message: "Category is required" }),
   payment_method_id: z.string().nonempty({ message: "Payment Method ID is required" }),
   description: z.string().optional(),
 });
-
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./ui/dialog";
-import { Input } from "./ui/input";
 
 type FormData = z.infer<typeof addIncomeSchema>;
 
@@ -75,7 +76,6 @@ export default function AddIncome() {
     resolver: zodResolver(addIncomeSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
-      amount: "",
       category_id: "",
       payment_method_id: "",
       description: ""
@@ -154,7 +154,12 @@ export default function AddIncome() {
               <FormField control={form.control} name="category_id" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Button onClick={() => setIsAddCategoryOpen(true)} variant="outline">
+                  <Button
+                    type="button"
+                    onClick={(event) => {
+                      // event.preventDefault();
+                      setIsAddCategoryOpen(true);
+                    }} variant="outline">
                     Add New Category
                   </Button>
                   <FormControl>
@@ -238,6 +243,7 @@ export default function AddIncome() {
           setCategories([...categories, newCat]);
           form.setValue("category_id", String(newCat.category_id));
         }}
+        associatedWith="income"
       />
     </>
   );

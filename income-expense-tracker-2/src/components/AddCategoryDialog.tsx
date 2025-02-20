@@ -1,5 +1,7 @@
 "use client";
+
 import React, { useState } from "react";
+
 import { Button } from "./ui/button";
 import {
     Dialog,
@@ -16,12 +18,14 @@ interface AddCategoryDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onCategoryAdded: (newCat: { category_id: number; category_name: string }) => void;
+    associatedWith: "income" | "expense";
 }
 
 export default function AddCategoryDialog({
     open,
     onOpenChange,
     onCategoryAdded,
+    associatedWith,
 }: AddCategoryDialogProps) {
     const [name, setName] = useState("");
     const [error, setError] = useState("");
@@ -35,7 +39,7 @@ export default function AddCategoryDialog({
             const res = await fetch("/api/category", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ category_name: name, associated_with: "income" }),
+                body: JSON.stringify({ category_name: name, associated_with: associatedWith }),
             });
             if (!res.ok) {
                 throw new Error("Failed to create category");
@@ -73,7 +77,7 @@ export default function AddCategoryDialog({
                         <Button type="submit" disabled={loading}>
                             {loading ? "Saving..." : "Save"}
                         </Button>
-                        <Button variant="secondary" onClick={() => onOpenChange(false)}>
+                        <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
                             Cancel
                         </Button>
                     </DialogFooter>
