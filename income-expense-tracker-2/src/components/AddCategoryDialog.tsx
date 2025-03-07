@@ -1,17 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { z } from "zod";
 
 import { Button } from "./ui/button";
-import {
-    Dialog,
-    DialogTrigger,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-    DialogFooter
-} from "./ui/dialog";
+import CustomDialog from "@/components/CustomDialog";
 import { Input } from "./ui/input";
 
 interface AddCategoryDialogProps {
@@ -20,6 +13,10 @@ interface AddCategoryDialogProps {
     onCategoryAdded: (newCat: { category_id: number; category_name: string }) => void;
     associatedWith: "income" | "expense";
 }
+
+const categorySchema = z.object({
+    category_name: z.string().nonempty("Category name is required"),
+});
 
 export default function AddCategoryDialog({
     open,
@@ -35,6 +32,12 @@ export default function AddCategoryDialog({
         e.preventDefault();
         setError("");
         setLoading(true);
+        const parseResult = categorySchema.safeParse({ category_name: name });
+        if (!parseResult.success) {
+            setError(parseResult.error.issues[0].message);
+            setLoading(false);
+            return;
+        }
         try {
             const res = await fetch("/api/category", {
                 method: "POST",
@@ -56,33 +59,36 @@ export default function AddCategoryDialog({
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Add Category</DialogTitle>
-                    <DialogDescription>Enter the new category name.</DialogDescription>
-                </DialogHeader>
-                {error && (
-                    <div className="bg-red-500 text-white p-3 rounded-md mb-3">
-                        {error}
-                    </div>
-                )}
-                <form onSubmit={handleAddCategory}>
-                    <Input
-                        placeholder="New category name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                    />
-                    <DialogFooter>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? "Saving..." : "Save"}
-                        </Button>
-                        <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-                            Cancel
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+        <CustomDialog
+            title="Add Category"
+            description="Enter the new category name."
+            open={open}
+            onOpenChange={onOpenChange}
+        >
+            {error && (
+                <div className="bg-red-500 text-white p-3 rounded-md mb-3">
+                    {error}
+                </div>
+            )}
+            <form onSubmit={handleAddCategory}>
+                <Input
+                    placeholder="New category name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                />
+                <div className="mt-4 flex justify-end gap-2">
+                    <Button type="submit" disabled={loading}>
+                        {loading ? "Saving..." : "Save"}
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => onOpenChange(false)}
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            </form>
+        </CustomDialog>
     );
 }
