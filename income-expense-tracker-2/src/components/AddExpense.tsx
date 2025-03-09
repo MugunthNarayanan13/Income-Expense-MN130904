@@ -28,27 +28,29 @@ import {
 import AddCategoryDialog from "./AddCategoryDialog";
 import CustomDialog from "./CustomDialog";
 
-// income_id integer PK
-// amount numeric NOT NULL
+// expense_id integer PK
+// amount numeric(15,2) NOT NULL
 // date date NOT NULL DEFAULT now()
 // category_id integer NOT NULL
 // payment_method_id integer NOT NULL
 // description text NULL DEFAULT NULL
+// recurring boolean NOT NULL DEFAULT false
 
-const addIncomeSchema = z.object({
-  amount: z.coerce.number().gt(0, { message: "Amount must be greater than 0" }), // Coerce to number, form data is always string so we need to convert it to number
+const addExpenseSchema = z.object({
+  amount: z.coerce.number().gt(0, { message: "Amount must be greater than 0" }),
   date: z.string(),
   category_id: z.string().nonempty({ message: "Category is required" }),
   payment_method_id: z
     .string()
     .nonempty({ message: "Payment Method ID is required" }),
   description: z.string().optional(),
+  recurring: z.coerce.boolean().optional(),
 });
 
-type FormData = z.infer<typeof addIncomeSchema>;
+type FormData = z.infer<typeof addExpenseSchema>;
 
-export default function AddIncome() {
-  const [incomeDialogOpen, setIncomeDialogOpen] = useState(false);
+export default function AddExpense() {
+  const [expenseDialogOpen, setExpenseDialogOpen] = useState(false);
   const [backendError, setBackendError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
@@ -65,7 +67,7 @@ export default function AddIncome() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
   useEffect(() => {
-    fetch("/api/category?associated_with=income")
+    fetch("/api/category?associated_with=expense")
       .then((res) => res.json())
       .then((data) => setCategories(data || []));
 
@@ -74,13 +76,14 @@ export default function AddIncome() {
       .then((data) => setPaymentMethods(data || []));
   }, []);
 
-  const form = useForm<z.infer<typeof addIncomeSchema>>({
-    resolver: zodResolver(addIncomeSchema),
+  const form = useForm<z.infer<typeof addExpenseSchema>>({
+    resolver: zodResolver(addExpenseSchema),
     defaultValues: {
       date: new Date().toISOString().split("T")[0],
       category_id: "",
       payment_method_id: "",
       description: "",
+      recurring: false,
     },
   });
 
@@ -95,20 +98,20 @@ export default function AddIncome() {
     setLoading(true);
     setBackendError(null);
     try {
-      const response = await fetch("/api/income", {
+      const response = await fetch("/api/expense", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to add income");
+        throw new Error(errorData.error || "Failed to add expense");
       }
       reset();
-      setIncomeDialogOpen(false);
-      alert("Income added successfully!");
+      setExpenseDialogOpen(false);
+      alert("Expense added successfully!");
     } catch (error) {
-      setBackendError((error as Error).message || "Error adding income");
+      setBackendError((error as Error).message || "Error adding expense");
     } finally {
       setLoading(false);
     }
@@ -117,17 +120,17 @@ export default function AddIncome() {
   return (
     <>
       <Button
-        onClick={() => setIncomeDialogOpen(true)}
-        style={{ backgroundColor: "green", color: "white" }}
+        onClick={() => setExpenseDialogOpen(true)}
+        style={{ backgroundColor: "red", color: "white" }}
       >
-        Add Income
+        Add Expense
       </Button>
       <CustomDialog
-        title="Add Income"
-        description="Fill in the details below to add a new income entry."
-        open={incomeDialogOpen}
+        title="Add Expense"
+        description="Fill in the details below to add a new expense entry."
+        open={expenseDialogOpen}
         onOpenChange={(open) => {
-          setIncomeDialogOpen(open);
+          setExpenseDialogOpen(open);
           if (!open) {
             reset();
           }
@@ -271,7 +274,23 @@ export default function AddIncome() {
                 </FormItem>
               )}
             />
-
+            <FormField
+              control={form.control}
+              name="recurring"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recurring</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="checkbox"
+                      checked={field.value || false}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <DialogFooter>
               {/* Submit button */}
               <Button type="submit" disabled={loading}>
@@ -291,7 +310,7 @@ export default function AddIncome() {
           setCategories([...categories, newCat]);
           form.setValue("category_id", String(newCat.category_id));
         }}
-        associatedWith="income"
+        associatedWith="expense"
       />
     </>
   );
